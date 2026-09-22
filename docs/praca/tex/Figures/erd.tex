@@ -1,0 +1,39 @@
+% Schemat bazy danych (uproszczony ERD). PK podkreślone, FK kursywą.
+\begin{tikzpicture}[dg, x=1cm, y=1cm,
+  ent/.style={draw=dgLine, rectangle split, rectangle split parts=2, rectangle split part fill={dgHead,white},
+              align=left, inner sep=3pt, text width=33mm, font=\scriptsize, rounded corners=1pt},
+  rel/.style={->, draw=dgLine, line width=.5pt}]
+% kolumna 1: konfiguracja / pochodne
+\node[ent] (dexes)  at (0,4.6)  {\textbf{dexes}\nodepart{second}\underline{id}\\name, factory, fee\_bps};
+\node[ent] (tokens) at (0,2.7)  {\textbf{tokens}\nodepart{second}\underline{address}\\symbol, decimals};
+\node[ent] (pairs)  at (0,0.6)  {\textbf{pairs}\nodepart{second}\underline{id}\\symbol\\\textit{token\_base}, \textit{token\_quote}};
+\node[ent] (bs)     at (0,-2.5) {\textbf{block\_states}\nodepart{second}\underline{\textit{pair\_id}, block}\\\textit{window\_id}, price\_a, price\_b\\spread\_pct, tvl\_min\_usd\\s, g, l, m, opt\_trade\_usd\\gross\_profit\_usd, direction};
+\node[ent] (models) at (0,-6.1) {\textbf{scoring\_models}\nodepart{second}\underline{id}\\name, kind, version\\params, metrics (jsonb)\\trained\_on\_window\_ids};
+% kolumna 2
+\node[ent] (pools)   at (4.6,2.7)  {\textbf{pools}\nodepart{second}\underline{id}\\\textit{dex\_id}, \textit{pair\_id}\\address, token0, token1};
+\node[ent] (windows) at (4.6,0.3)  {\textbf{windows}\nodepart{second}\underline{id}\\name, from\_ts, to\_ts\\from\_block, to\_block};
+\node[ent] (opp)     at (4.6,-2.5) {\textbf{opportunities}\nodepart{second}\underline{id}\\\textit{pair\_id}, \textit{window\_id}, block\\spread\_pct, direction\\est\_profit\_usd};
+\node[ent] (ver)     at (4.6,-6.1) {\textbf{opportunity\_verifications}\nodepart{second}\underline{\textit{opportunity\_id}}\\status, route\\consumer\_tx\_hash\\realized\_profit\_usd, gas\_cost\_usd\\blocks\_to\_consumption\\profitable\_consumed};
+% kolumna 3: surowe / oceny / kolejka
+\node[ent] (blocks) at (9.2,4.6)  {\textbf{blocks}\nodepart{second}\underline{number}\\timestamp, base\_fee\\gas\_price\_median, tx\_count};
+\node[ent] (sync)   at (9.2,2.5)  {\textbf{sync\_events}\nodepart{second}\underline{\textit{pool\_id}, block, log\_index}\\tx\_hash, reserve0, reserve1};
+\node[ent] (swap)   at (9.2,0.3)  {\textbf{swap\_events}\nodepart{second}\underline{\textit{pool\_id}, block, log\_index}\\tx\_hash, sender, to\\amount0/1\_in/out, gas\_price};
+\node[ent, text width=38mm] (ranges) at (9.2,-2.0) {\textbf{ingest\_ranges}\nodepart{second}\underline{\textit{pool\_id}, from\_block, to\_block}\\status, error};
+\node[ent, text width=39mm] (scores) at (9.2,-4.2) {\textbf{model\_scores}\nodepart{second}\underline{\textit{model\_id}, \textit{pair\_id}, block}\\score, label};
+\node[ent] (jobs)   at (9.2,-6.5) {\textbf{jobs}\nodepart{second}\underline{id}\\type, params (jsonb), status\\progress, log, error, attempts};
+
+\draw[rel] (pools.north) |- (dexes.east);
+\draw[rel] (pools.west) -- (tokens.east |- pools.west);
+\draw[rel] (pools.south) -- ++(0,-.3) -| ([xshift=6mm]pairs.north);
+\draw[rel] (pairs.north) -- (tokens.south);
+\draw[rel] (sync.west) -- (pools.east |- sync.west);
+\draw[rel] (swap.west) -- ++(-.5,0) |- (pools.east);
+\draw[rel] (ranges.west) -- ++(-.7,0) |- (pools.east);
+\draw[rel] (bs.north) -- (pairs.south);
+\draw[rel] (bs.east) -- (windows.west |- bs.east);
+\draw[rel] (opp.north) -- (windows.south);
+\draw[rel] (opp.west) -- (bs.east |- opp.west);
+\draw[rel] (ver.north) -- (opp.south);
+\draw[rel] (scores.west) -- ++(-.5,0) |- (models.east);
+\draw[rel] (scores.north) -- ++(0,.4) -| ([xshift=-8mm]swap.south);
+\end{tikzpicture}

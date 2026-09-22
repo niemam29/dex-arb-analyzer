@@ -1,0 +1,76 @@
+\newpage
+\section{Podsumowanie i~wnioski}
+
+\subsection{Realizacja celów pracy}
+Cel pracy sformułowany w~rozdziale~1.2 został zrealizowany. Rozbito go na cztery zadania.
+\begin{itemize}[nosep]
+  \item Zbudowano system gromadzący stany puli płynności na podstawie zdarzeń \texttt{Sync}
+        i~\texttt{Swap} pobieranych z~archiwalnego węzła Ethereum. Dla czterech par i~czterech
+        okien zebrano 1,42~mln stanów par w~blokach i~wykryto 4\,829 rozbieżności
+        przekraczających próg 0,65\,\% (rozdział~4.1).
+  \item Opracowano procedurę weryfikacji retrospektywnej, która ustala, czy i~w~którym bloku
+        okazja została skonsumowana, kto był jej beneficjentem oraz jaką trasą przebiegła
+        (rozdział~3.7). Status konsumpcji atomowej otrzymało 714 okazji, w~tym 570 o~trasie
+        dwupulowej. Próba 10 konsumpcji sprawdzonych ręcznie dała zgodność 10/10 co do zużycia
+        gazu i~9/10 co do znaku oraz rzędu wielkości zysku (rozdział~4.3).
+  \item Zaprojektowano i~zaimplementowano heurystykę progową (baseline~v1) wraz z~jej
+        skalibrowaną wersją (baseline~v2), system Mamdaniego oraz sieć ANFIS (rozdział~3.6).
+        Modele oceniono na tej samej populacji okazji, w~podziale międzyoknowym i~grupowym,
+        z~przedziałami ufności AUC (rozdziały~4.2 i~4.5). Najlepszy wynik generalizacji
+        osiągnęły baseline~v2 i~ANFIS.
+  \item Zbudowano serwer API z~16 punktami końcowymi oraz interfejs webowy z~pięcioma widokami
+        (rozdziały~3.8 i~3.9).
+\end{itemize}
+Od założeń projektu odstąpiono w~jednym punkcie: zamiast indeksowania zdarzeń usługą The~Graph
+zastosowano bezpośrednie zapytania do węzła archiwalnego, co uzasadniono w~rozdziale~1.3.
+
+\subsection{Wnioski}
+Na podstawie wyników z~rozdziału~4 sformułowano pięć wniosków.
+\begin{itemize}[nosep]
+  \item Etykiety uzyskane w~weryfikacji retrospektywnej mierzą zachowanie konkurencji, a~nie
+        zyskowną konsumowalność dla zewnętrznego obserwatora. Model uczony na takich etykietach
+        przewiduje, czy rozbieżność zostanie skonsumowana, a~nie czy dałoby się ją skonsumować
+        samodzielnie.
+  \item Ocena wykonalności może być trafniejsza niż samo wykrycie rozbieżności cenowej, ale
+        trafność bierze się z~uszeregowania okazji według ich wielkości, a~nie z~wiedzy
+        eksperckiej ani ze struktury rozmytej. Reguły przeniesione z~systemu Mamdaniego karzą
+        wysoki koszt gazu i~dużą aktywność bloku, a~właśnie takie okazje były konsumowane
+        najczęściej; w~oknach z~2021~roku model działa niemal odwrotnie do etykiety
+        (AUC 0,392 i~0,359). Kalibracja baseline~v2 wyzerowała wagę kosztu gazu i~sprowadziła
+        ocenę do rankingu po zysku brutto, a~ANFIS nie poprawił istotnie wyniku skalibrowanej
+        heurystyki.
+  \item Koszt gazu nie różnicuje klas, ponieważ arbitrażyści rozliczają go poza polem
+        transakcji: w~oknie 2021-05 131 z~618 konsumpcji atomowych ma zerową cenę gazu.
+  \item Szacunek zysku z~arytmetyki AMM jest dokładny; źródłem rozbieżności między szacunkiem
+        a~faktem jest czas, nie wycena. Dla konsumpcji w~bloku następującym po okazji ($k=1$,
+        okno 2021-05) mediana ilorazu zysku zrealizowanego do szacowanego wynosi 1,00.
+  \item Sygnał ,,duża rozbieżność cenowa'' oznacza, że różnica zniknie w~ciągu kilku bloków,
+        i~jest to użyteczna informacja ochronna. Modele wskazują, które rozbieżności zostaną
+        skonsumowane, a~rozkład opóźnień mówi, jak szybko: 81\,\% konsumpcji dwupulowych
+        nastąpiło najpóźniej w~drugim bloku po wykryciu okazji. Animator rynku, widząc taki
+        sygnał w~trybie na żywo (rys.~\ref{fig:ui-live}), powinien traktować swoją ofertę jako
+        narażoną w~perspektywie kilkudziesięciu sekund, a~nie minut.
+\end{itemize}
+
+\subsection{Kierunki dalszych prac}
+Analiza ograniczeń omówionych w~rozdziale~4.8 wskazuje kierunki, w~których pracę można rozwinąć.
+\begin{itemize}[nosep]
+  \item Obecna etykieta mówi o~tym, czy rozbieżność została skonsumowana przez konkurencję.
+        Dodatkowa etykieta ,,wykonalna dla obserwatora'' obejmowałaby okazje, które przetrwały
+        co~najmniej jeden blok od wykrycia i~pozostały zyskowne po odliczeniu kosztu gazu.
+        Pozwoliłaby ona sprawdzić, czy reguły eksperckie są trafne przy właściwie postawionym
+        pytaniu.
+  \item Cecha $M$ korzysta z~percentyli liczonych po całym oknie, więc ocena bloku zależy od
+        bloków późniejszych, których w~trybie na żywo jeszcze nie ma. Gdy blok konsumpcji jest
+        zarazem blokiem wykrycia, cecha jest wysoka po części dlatego, że swapy transakcji
+        konsumującej wchodzą do liczby swapów tego bloku. W~kolejnej wersji percentyle powinny
+        być liczone krocząco, a~trening powinien wykluczać konsumpcje w~bloku wykrycia.
+  \item Ze zbioru wykluczono 144 konsumpcje o~trasie wielopulowej. Ich rozliczenie wymaga cen
+        tokenów spoza analizowanej pary oraz obsługi pul zgodnych z~protokołem Uniswap~V3.
+        Włączenie tych tras uzupełniłoby klasę pozytywną i~pozwoliłoby ocenić, jaką część
+        arbitrażu przejmują agregatory.
+  \item System szacuje zysk na stanie bloku, ale nie sprawdza, czy transakcja wykonałaby się
+        poprawnie w~kontekście pozostałych transakcji bloku. Symulacja na lokalnym forku maszyny
+        EVM pozwoliłaby uwzględnić kolejność transakcji, poślizg i~odrzucenia, czyli źródła
+        różnicy między szacunkiem a~faktem.
+\end{itemize}

@@ -1,0 +1,32 @@
+% Diagram sekwencji weryfikacji retrospektywnej
+\begin{tikzpicture}[dg, x=1cm, y=1cm,
+  life/.style={box, minimum width=28mm, minimum height=9mm},
+  act/.style={draw=dgLine, fill=dgHead, minimum width=2.4mm, inner sep=0pt, anchor=north},
+  msg/.style={->, draw=dgLine, line width=.6pt},
+  ret/.style={->, draw=dgLine, line width=.6pt, dashed},
+  ml/.style={font=\scriptsize, above, inner sep=1.5pt},
+  stp/.style={font=\scriptsize\itshape, text=dgLine, anchor=west, inner sep=2pt}]
+\def\H{-9.2}
+\node[life] (w)   at (0,0)    {\texttt{worker}};
+\node[life] (v)   at (4.6,0)  {\texttt{analysis/verify}};
+\node[life] (db)  at (9.2,0)  {PostgreSQL};
+\node[life] (rpc) at (13.8,0) {Węzeł RPC};
+\foreach \n in {w,v,db,rpc} \draw[draw=dgLine!60, dash pattern=on 2pt off 2pt] (\n.south) -- ++(0,\H);
+
+\node[act, minimum height=8.2cm] at (w |- 0,-.45) {};
+\draw[msg] (w |- 0,-1.0) -- node[ml] {okazje (paczka 200)} (v |- 0,-1.0);
+\node[act, minimum height=6.8cm] at (v |- 0,-1.0) {};
+
+\draw[msg] (v |- 0,-1.8) -- node[ml] {swapy, spready $B\ldots B{+}3$} (db |- 0,-1.8);
+\draw[ret] (db |- 0,-2.4) -- (v |- 0,-2.4);
+\node[stp] at (4.8,-3.0) {1. wybór transakcji-kandydata};
+
+\draw[msg] (v |- 0,-3.7) -- node[ml] {\texttt{eth\_getTransactionReceipt} (paczka 20)} (rpc |- 0,-3.7);
+\draw[ret] (rpc |- 0,-4.3) -- node[ml] {paragony} (v |- 0,-4.3);
+\node[stp] at (4.8,-4.9) {2. przepływy tokenów, beneficjent, trasa};
+\node[stp] at (4.8,-5.4) {3. status, opóźnienie $k$, zysk, koszt gazu};
+
+\draw[msg] (v |- 0,-6.2) -- node[ml] {zapis weryfikacji} (db |- 0,-6.2);
+\draw[ret] (v |- 0,-7.0) -- node[ml] {gotowe} (w |- 0,-7.0);
+\draw[msg] (w |- 0,-7.8) -- node[ml] {postęp zadania} (db |- 0,-7.8);
+\end{tikzpicture}

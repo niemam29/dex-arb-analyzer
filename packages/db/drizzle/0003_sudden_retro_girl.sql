@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "jobs_type_params_active_unique" ON "jobs" USING btree ("type","params") WHERE "jobs"."status" IN ('queued', 'running');

@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dexarb-postgres
+    environment:
+      POSTGRES_USER: dexarb
+      POSTGRES_PASSWORD: dexarb
+      POSTGRES_DB: dexarb
+    ports:
+      # Host 5433 (nie 5432): na tej maszynie deweloperskiej port 5432 bywa zajęty przez lokalny
+      # natywny Postgres.app (niezwiązany z tym projektem) — kolizja portu na hoście uniemożliwia
+      # połączenia TCP z zewnątrz kontenera, mimo że sam kontener działa poprawnie.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dexarb -d dexarb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "work_mem=64MB"]
+
+volumes:
+  pgdata:

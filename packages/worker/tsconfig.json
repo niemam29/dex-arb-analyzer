@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "outDir": "dist", "types": ["node"] },
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"],
+  "references": [{ "path": "../api" }, { "path": "../db" }, { "path": "../ingest" }, { "path": "../analysis" }, { "path": "../shared" }]
+}

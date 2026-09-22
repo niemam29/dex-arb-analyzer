@@ -1,0 +1,16 @@
+{
+  "name": "@dex-arb/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@thi.ng/fuzzy": "^2.1.144",
+    "zod": "^4.4.3"
+  }
+}

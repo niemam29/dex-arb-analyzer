@@ -1,0 +1,25 @@
+{
+  "name": "@dex-arb/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:live": "RUN_LIVE_RPC=1 vitest run erpc.live",
+    "seed": "tsx --env-file=../../.env scripts/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dex-arb/core": "^0.1.0",
+    "@dex-arb/db": "^0.1.0",
+    "@dex-arb/shared": "^0.1.0",
+    "ethers": "^6.17.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "gitSha": "6a4974c8af82f3e8103e2cd4f3b47c848dc4055f",
+  "createdAt": "2026-08-27T04:57:01.510Z",
+  "nodeVersion": "v24.13.0",
+  "rpcHost": "self-hosted",
+  "deps": {
+    "@thi.ng/fuzzy": "2.1.144",
+    "drizzle-orm": "0.45.2",
+    "zod": "4.4.3",
+    "fastify": "5.12.1"
+  },
+  "tables": {
+    "blocks": 250373,
+    "sync_events": 795618,
+    "swap_events": 786828,
+    "block_states": 1418144,
+    "opportunities": 4829,
+    "opportunity_verifications": 4829,
+    "scoring_models": 19,
+    "model_scores": 23189864,
+    "jobs": 92
+  },
+  "windows": [
+    {
+      "id": 2,
+      "name": "2021-05 krach",
+      "from_block": 12429199,
+      "to_block": 12506592
+    },
+    {
+      "id": 3,
+      "name": "2021-11 ATH",
+      "from_block": 13553257,
+      "to_block": 13642393
+    },
+    {
+      "id": 4,
+      "name": "2022-05 Luna",
+      "from_block": 14713964,
+      "to_block": 14801795
+    },
+    {
+      "id": 5,
+      "name": "2022-11 FTX",
+      "from_block": 15900096,
+      "to_block": 16000337
+    }
+  ]
+}

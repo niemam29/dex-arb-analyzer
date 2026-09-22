@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dexarb
+          POSTGRES_PASSWORD: dexarb
+          POSTGRES_DB: dexarb_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dexarb -d dexarb_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgres://dexarb:dexarb@localhost:5432/dexarb_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Skrypty pakietów ładują `.env` przez `tsx --env-file=../../.env` — plik musi istnieć.
+      - name: Plik .env dla skryptów migracji
+        run: |
+          printf 'DATABASE_URL=%s\nDATABASE_URL_TEST=%s\nRPC_URL=\n' "$DATABASE_URL_TEST" "$DATABASE_URL_TEST" > .env
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Migracje na bazie testowej
+        run: npm run migrate -w @dex-arb/db
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL_TEST }}
+      - name: Testy z pokryciem (integracyjne na DATABASE_URL_TEST)
+        run: npx vitest run --coverage
+      - run: npm run build -w @dex-arb/web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore

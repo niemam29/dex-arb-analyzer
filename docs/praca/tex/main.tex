@@ -1,0 +1,97 @@
+% Projekt dyplomowy — szablon WIMiIP/AGH (klasa aghthesis). Kompilacja: `make` (pdflatex → bibtex → pdflatex ×2).
+\documentclass[polish,12pt]{aghthesis}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{array}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\hypersetup{colorlinks, citecolor=black, filecolor=black, linkcolor=black, urlcolor=black}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{doi}
+\usepackage{booktabs}   % tabele z results/evaluation.tex
+\usepackage{amsmath}
+\usepackage{caption}    % \captionof
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,shapes.multipart,arrows.meta,positioning,fit,calc}
+\input{Figures/style}
+
+% ---------- listingi ----------
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+   backgroundcolor=\color{backcolour},
+   commentstyle=\color{codegreen},
+   keywordstyle=\color{magenta},
+   numberstyle=\tiny\color{codegray},
+   stringstyle=\color{codepurple},
+   basicstyle=\ttfamily\footnotesize,
+   breakatwhitespace=false, breaklines=true, captionpos=b, keepspaces=true,
+   numbers=left, numbersep=5pt, showspaces=false, showstringspaces=false,
+   showtabs=false, tabsize=2,
+   literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1
+            {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+            {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1
+            {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1
+}
+
+\lstdefinelanguage{TypeScript}{
+    keywords={break, case, catch, class, const, continue, debugger, default, delete, do, else,
+      export, finally, for, function, if, import, in, instanceof, new, return, super, switch,
+      this, throw, try, typeof, var, void, while, with, yield, async, await, let, from, as,
+      interface, type, enum, implements, extends, readonly, public, private, protected, static,
+      declare, namespace, keyof, satisfies},
+    keywordstyle=\color{magenta}\bfseries,
+    ndkeywords={Promise, console, JSON, Error, Boolean, Number, String, Object, Function, Array,
+      Date, RegExp, Map, Set, Infinity, NaN, undefined, null, bigint, number, string, boolean,
+      unknown, never, any, BigInt},
+    ndkeywordstyle=\color{teal}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=true,
+    comment=[l]{//}, morecomment=[s]{/*}{*/},
+    commentstyle=\color{codegreen}\ttfamily,
+    stringstyle=\color{codepurple}\ttfamily,
+    morestring=[b]', morestring=[b]", morestring=[b]`,
+}
+
+\lstset{style=mystyle}
+\renewcommand{\lstlistingname}{Fragment kodu}
+\captionsetup[lstlisting]{justification=raggedright, singlelinecheck=false}
+
+% ---------- metadane ----------
+\author{Kacper Kończyk}
+\department{KATEDRA INFORMATYKI STOSOWANEJ I MODELOWANIA}
+\titlePL{Projekt systemu komputerowego do analizy danych transakcyjnych w~celu wykrywania
+  rozbieżności cenowych oraz heurystycznej oceny wykonalności arbitrażu w~zdecentralizowanych
+  giełdach}
+\titleEN{Design of a~computer system for the analysis of transactional data to detect price
+  discrepancies and to heuristically assess the feasibility of arbitrage on decentralized
+  exchanges}
+\fieldofstudy{Informatyka Techniczna}
+\supervisor{dr hab. inż. Zbigniew Mitura}
+\date{2026}
+
+\raggedbottom
+\renewcommand{\topfraction}{.9}\renewcommand{\textfraction}{.05}\renewcommand{\floatpagefraction}{.85}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\input{Chapters/01-wstep}
+\input{Chapters/02-analiza}
+\input{Chapters/03-projekt}
+\input{Chapters/04-weryfikacja}
+\input{Chapters/05-zakonczenie}
+\input{Chapters/06-genai}
+\input{bibliography}
+\input{Chapters/zalaczniki}
+
+\end{document}

@@ -1,0 +1,72 @@
+/* Panel „Na żywo” (spec 2026-08-27-live-panel-design.md §7) — style widoku /live.
+   Tokeny i prymitywy: ../styles.css, ./ui.css. */
+
+/* Siatka 2×2 kart par; poniżej 1100 px jedna kolumna (jak .split). */
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+@media (max-width: 1100px) {
+  .live-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.live-card .card-body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Ceny obu pul — kolory pul jak na wykresie ceny. */
+.live-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-variant-numeric: tabular-nums;
+}
+.live-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.live-price--a .num {
+  color: var(--pool-a);
+}
+.live-price--b .num {
+  color: var(--pool-b);
+}
+
+/* Spread dużą liczbą; .profit (b.css) gdy ≥ próg. */
+.live-spread {
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.live-badges .badge + .badge {
+  margin-left: 0;
+}
+
+.sparkline {
+  width: 100%;
+}
+.sparkline--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-table);
+}
+
+.live-recent td.num .muted {
+  font-size: var(--fs-label);
+}

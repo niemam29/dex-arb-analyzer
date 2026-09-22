@@ -1,0 +1,3 @@
+/* Tor C (Okno: PriceChart, SpreadChart, GasChart, ScoreChart) — style specyficzne dla toru.
+   Karty wykresów (.chart-card, w tym Recharts overrides) skonsolidowane w ../ui.css (fix
+   round po przeglądzie whole-branch, 2026-08-27) — nic toro-specyficznego tu na razie nie ma. */

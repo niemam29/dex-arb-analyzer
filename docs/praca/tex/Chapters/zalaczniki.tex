@@ -1,0 +1,157 @@
+\newpage
+\appendix
+\section*{Załączniki}
+\addcontentsline{toc}{section}{Załączniki}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+\setcounter{subsection}{0}
+
+\subsection{Uruchomienie systemu i~reprodukcja wyników}
+
+Wymagania: Node.js $\geq 20$ (wyniki wygenerowano na v24.13.0), npm $\geq 10$, Docker
+(PostgreSQL~16 z~\texttt{docker-compose.yml}) oraz archiwalny węzeł RPC Ethereum obejmujący bloki
+z~lat 2021--2022 (zmienna \texttt{RPC\_URL}); publiczne węzły z~\texttt{RPC\_FALLBACK\_URLS}
+służą wyłącznie jako zapas po błędach. Uruchomienie środowiska deweloperskiego pokazuje
+fragment~\ref{lst:run}, pełną reprodukcję fragment~\ref{lst:repro}.
+\begin{lstlisting}[language=bash, caption={Uruchomienie systemu}, label={lst:run}]
+cp .env.example .env          # uzupełnić RPC_URL
+npm install
+npm run db:up && npm run db:migrate && npm run db:seed
+npm run dev                    # api (:3001) + worker + web (:5173)
+\end{lstlisting}
+Pełna reprodukcja od pustej bazy trwa ok. 6--7~h, w~większości na pobieranie danych:
+\begin{lstlisting}[language=bash, caption={Reprodukcja wyników}, label={lst:repro}]
+npm run reproduce                    # scripts/reproduce.sh: ingest, analiza, weryfikacja,
+                                     # kalibracja baseline v2, 10 treningów ANFIS
+npm run reproduce -- --skip-ingest   # pomija pobieranie, zakłada gotową bazę
+npm run export-results -- --latex    # tabele CSV/Markdown/LaTeX do results/
+npm run test                         # 953 testów; bez .env pomija warstwy integracyjne
+\end{lstlisting}
+Zmienne konfiguracyjne (\texttt{.env}): \texttt{DATABASE\_URL}, \texttt{DATABASE\_URL\_TEST},
+\texttt{RPC\_URL}, \texttt{RPC\_FALLBACK\_URLS}, \texttt{RPC\_CONCURRENCY} (4),
+\texttt{LOGS\_CHUNK\_BLOCKS} (10\,000), \texttt{JOB\_MAX\_ATTEMPTS} (3), \texttt{WORKER\_POLL\_MS}
+(2000), \texttt{LIVE\_ENABLED}, \texttt{LIVE\_POLL\_MS} (15\,000), \texttt{LIVE\_HISTORY} (240),
+\texttt{LIVE\_MODELS\_REFRESH\_MS} (300\,000).
+
+\subsection{Słownik pojęć}
+
+\begin{description}[nosep, leftmargin=1.5em, font=\normalfont\itshape]
+  \item[agregator] kontrakt routera dzielący handel na wiele puli w~jednej transakcji; transakcja
+    dotykająca trzeciej puli ma trasę \texttt{multi}.
+  \item[arbitraż atomowy] dwa swapy przeciwnych kierunków w~obu pulach pary w~jednej transakcji;
+    albo cała sekwencja się powiedzie, albo cała cofnie.
+  \item[baseline v1 / v2] modele odniesienia bez logiki rozmytej: próg na zysku netto przy
+    220\,000 gazu / wersja skalibrowana na etykietach weryfikacji.
+  \item[beneficjent] adres, który zyskał na konsumpcji okazji: kandydat o~maksymalnym netto USD
+    przepływów tokenów pary.
+  \item[blok konsumpcji, $k$] opóźnienie transakcji konsumującej względem bloku okazji,
+    $k\in[0,3]$; $k=0$ jest dopuszczalne, bo stan bloku opisuje jego koniec.
+  \item[bootstrap stratyfikowany] 1000 losowań ze zwracaniem, osobno w~każdej klasie, do
+    przedziału ufności AUC.
+  \item[grupa podziału] jednostka podziału uczący/testowy: okazje tej samej transakcji
+    konsumującej albo klaster sąsiednich okazji (przerwa $\le 3$ bloki); tło to singletony.
+  \item[okazja] blok, w~którym rozbieżność cenowa między pulami pary przekracza $0{,}65\,\%$.
+  \item[okno] zakres bloków odpowiadający jednemu z~czterech okresów historycznych.
+  \item[pakiet MEV] transakcja dostarczona producentowi bloku poza publiczną pulą, często
+    z~ceną gazu 0 i~opłatą poza polem transakcji.
+  \item[populacja ewaluacji] zweryfikowane okazje o~znanej etykiecie (trasa $\neq$ \texttt{multi}).
+  \item[proweniencja] metadane odtwarzalności zapisane przy treningu: skrót commitu, wersje
+    bibliotek, zakresy bloków, liczności tabel.
+  \item[rezerwy / \texttt{Sync}] stan puli AMM po ostatnim zdarzeniu \texttt{Sync} w~bloku;
+    bloki bez zdarzeń dziedziczą stan poprzedni.
+  \item[rozbieżność cenowa, $S$] $|p_A-p_B|/\min(p_A,p_B)\cdot 100\,\%$.
+  \item[statusy weryfikacji] \texttt{consumed\_atomic}, \texttt{consumed\_partial},
+    \texttt{decayed}, \texttt{persisted} (rozdział~3.7).
+  \item[tło] bloki okna bez okazji; klasa negatywna w~zbiorze uczącym, podpróbkowana $10:1$.
+  \item[trasa \texttt{two\_pool} / \texttt{multi}] transakcja konsumująca dotyka wyłącznie dwóch
+    puli pary / także innych puli lub tokenów; dla \texttt{multi} zysk konsumenta jest nieznany.
+  \item[TVL] wartość zablokowana w~puli w~USD; cecha $L$ to TVL płytszej puli w~mln USD.
+  \item[WETH $\equiv$ ETH] natywny ETH i~opakowany WETH traktowane jako jeden aktyw; zdarzenia
+    \texttt{Deposit}/\texttt{Withdrawal} rozliczane na nadawcę transakcji.
+  \item[zysk brutto / netto / zrealizowany] z~optymalnej transakcji wg arytmetyki AMM /
+    po odjęciu szacowanego kosztu gazu / faktyczne netto beneficjenta z~paragonu.
+\end{description}
+
+\subsection{Baza reguł systemu Mamdaniego}
+
+Termy zmiennych podano w~tabeli~\ref{tab:terms}, reguły w~tabeli~\ref{tab:rules} (\texttt{DEFAULT\_MAMDANI\_PARAMS},
+\texttt{packages/core/src/mamdani.params.ts}); \emph{nie\_X} oznacza negację termu
+(przynależność $1-\mu_X$):
+
+\begin{table}[H]\centering\small
+\caption{Reguły R1--R16 systemu Mamdaniego}\label{tab:rules}
+\begin{tabular}{lll}
+\toprule
+Reguła & Jeżeli & To $W$ \\
+\midrule
+R1  & $S$ = znikoma & niewykonalna \\
+R2  & $G$ = zaporowy & niewykonalna \\
+R3  & $S$ = umiarkowana $\wedge$ $L$ = płytka & niewykonalna \\
+R4  & $S$ = umiarkowana $\wedge$ $G$ = umiarkowany $\wedge$ $M$ = nie\_niskie & niewykonalna \\
+R5  & $S$ = umiarkowana $\wedge$ $G$ = niski $\wedge$ $L$ = głęboka $\wedge$ $M$ = niskie & wykonalna \\
+R6  & $S$ = umiarkowana $\wedge$ $G$ = niski $\wedge$ $M$ = średnie & ryzykowna \\
+R7  & $S$ = umiarkowana $\wedge$ $G$ = niski $\wedge$ $L$ = średnia $\wedge$ $M$ = niskie & wykonalna \\
+R8  & $S$ = umiarkowana $\wedge$ $G$ = niski $\wedge$ $M$ = wysokie & ryzykowna \\
+R9  & $S$ = umiarkowana $\wedge$ $G$ = umiarkowany $\wedge$ $L$ = nie\_płytka $\wedge$ $M$ = niskie & ryzykowna \\
+R10 & $S$ = duża $\wedge$ $G$ = niski $\wedge$ $L$ = głęboka $\wedge$ $M$ = niskie & atrakcyjna \\
+R11 & $S$ = duża $\wedge$ $G$ = niski $\wedge$ $L$ = nie\_płytka $\wedge$ $M$ = średnie & wykonalna \\
+R12 & $S$ = duża $\wedge$ $G$ = niski $\wedge$ $L$ = średnia $\wedge$ $M$ = niskie & atrakcyjna \\
+R13 & $S$ = duża $\wedge$ $G$ = niski $\wedge$ $M$ = wysokie & ryzykowna \\
+R14 & $S$ = duża $\wedge$ $G$ = umiarkowany $\wedge$ $L$ = nie\_płytka $\wedge$ $M$ = niskie & wykonalna \\
+R15 & $S$ = duża $\wedge$ $G$ = umiarkowany $\wedge$ $M$ = nie\_niskie & ryzykowna \\
+R16 & $S$ = duża $\wedge$ $L$ = płytka & ryzykowna \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Repozytorium kodu źródłowego}
+
+Kod źródłowy, dokumentacja metodyczna (\texttt{docs/}), zapisy decyzji projektowych
+(\texttt{docs/adr/}) oraz wyniki (\texttt{results/}) są dostępne w~publicznym repozytorium:
+\url{https://github.com/niemam29/dex-arb-analyzer}. Strukturę repozytorium pokazuje fragment~\ref{lst:repo}.
+\begin{lstlisting}[caption={Struktura repozytorium}, label={lst:repo}]
+packages/
+  core/       AMM, cechy S/G/L/M, modele (baseline, mamdani, anfis), ewaluacja
+  db/         schemat Drizzle, migracje (drizzle/), createDb/createTestDb
+  shared/     DTO (zod) wspólne dla api i web
+  ingest/     pobieranie zdarzeń Sync/Swap i bloków z RPC
+  analysis/   block_states, opportunities, weryfikacja retrospektywna, zbiór ANFIS
+  api/        Fastify (trasy, zapytania, eksport wyników)
+  worker/     kolejka jobs, handlery zadań, planer macierzy par x okien
+  web/        dashboard React + Vite
+docs/         metodyka, ADR, glosariusz, słownik danych, status, praca (LaTeX)
+scripts/      reproduce.sh i skrypty pomocnicze
+results/      wyniki eksportu (evaluation.md, provenance.json w repozytorium)
+.github/      workflow CI
+\end{lstlisting}
+
+\subsection{Punkty końcowe API}
+
+Serwer (Fastify, bez uwierzytelniania) udostępnia 16 tras (tab.~\ref{tab:api}). Odpowiedzi są walidowane schematami
+zod z~pakietu \texttt{shared} również po stronie serwera, więc niezgodność zapytania SQL ze
+schematem DTO kończy się błędem 500 w~testach, a~nie cichym błędem w~interfejsie.
+
+\begin{table}[H]\centering\small
+\caption{Punkty końcowe serwera API}\label{tab:api}
+\begin{tabular}{llp{7.4cm}}
+\toprule
+Metoda & Ścieżka & Przeznaczenie \\
+\midrule
+\texttt{GET}  & \texttt{/health} & Kontrola żywotności procesu. \\
+\texttt{GET}  & \texttt{/pairs} & Katalog par wraz z~tokenami i~pulami. \\
+\texttt{GET}  & \texttt{/windows} & Katalog okien analizy. \\
+\texttt{GET}  & \texttt{/models} & Katalog modeli oceny z~parametrami. \\
+\texttt{GET}  & \texttt{/coverage} & Pokrycie par i~okien danymi obu pul. \\
+\texttt{GET}  & \texttt{/pairs/:id/windows/:wid/series} & Szeregi czasowe pary w~oknie (ceny, rozbieżność, gaz, oceny), agregowane w~SQL. \\
+\texttt{GET}  & \texttt{/pairs/:id/windows/:wid/opportunities} & Stronicowana lista okazji z~filtrami: status, minimalna rozbieżność, model. \\
+\texttt{GET}  & \texttt{/opportunities/:id} & Szczegóły okazji: cechy, rezerwy, aktywacje reguł, wynik weryfikacji. \\
+\texttt{GET}  & \texttt{/models/:id/evaluation} & Metryki modelu na wskazanym oknie lub na wszystkich łącznie. \\
+\texttt{GET}  & \texttt{/live} & Ostatnia migawka trybu na żywo. \\
+\texttt{GET}  & \texttt{/jobs} & Lista zadań w~kolejce ze stanem i~postępem. \\
+\texttt{GET}  & \texttt{/jobs/:id} & Pojedyncze zadanie wraz z~dziennikiem. \\
+\texttt{POST} & \texttt{/jobs} & Zlecenie zadania; przy duplikacie aktywnego zlecenia zwraca 409. \\
+\texttt{POST} & \texttt{/jobs/:id/retry} & Ponowienie zadania, dopuszczalne wyłącznie ze stanu \texttt{failed}. \\
+\texttt{POST} & \texttt{/models/anfis/train} & Zlecenie treningu ANFIS na wybranych oknach. \\
+\texttt{POST} & \texttt{/models/baseline\_v2/calibrate} & Zlecenie kalibracji heurystyki na wybranych oknach. \\
+\bottomrule
+\end{tabular}
+\end{table}

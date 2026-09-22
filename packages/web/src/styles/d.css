@@ -1,0 +1,99 @@
+/* Tor D (Modele: ConfusionMatrix, BaselineV2Params, RocChart, ScoreHistogram, TrainForm, CalibrateBaselineV2Form) — style specyficzne dla toru. */
+
+/* Modele: macierz pomyłek */
+.confusion {
+  display: grid;
+  gap: var(--space-3);
+}
+.confusion-table {
+  width: auto;
+}
+.confusion-table th[scope="row"] {
+  position: static;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--fs-table);
+  color: var(--fg);
+  font-weight: 500;
+}
+.confusion-table .cell {
+  min-width: 64px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+.confusion-table .cell--ok {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+.confusion-table .cell--danger {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+/* `.stat-row` (grid) i karty wykresów `.chart-card` (Recharts overrides) skonsolidowane w
+   ../ui.css — `.stat-row--mini` usunięte,
+   ConfusionMatrix używa teraz `<Stat size="mini">` (klasa `stat--mini`, już w ui.css). Parametry
+   baseline v2 (`dl.detail`) też w ui.css — `BaselineV2Params.tsx` ma klasę `detail
+   baseline-v2-params`, druga klasa zostaje jako hak testowy/stylistyczny bez własnych reguł. */
+
+/* Modele: formularze treningu/kalibracji (WindowPills — `.pill-group`/`.pills`/`.pill` — w
+   ../ui.css, bo komponent przeniósł się do components/ui/WindowPills.tsx) */
+.model-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.param-grid .field {
+  display: flex;
+}
+.param-grid input {
+  width: 100%;
+}
+.field--wide {
+  grid-column: 1 / -1;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Modele: widok */
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.compare td,
+.compare th {
+  white-space: nowrap;
+}
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: var(--space-4);
+}
+.model-panel .card-title {
+  display: inline-flex;
+  align-items: center;
+}
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-4);
+}
+.job-status {
+  display: grid;
+  grid-template-columns: auto auto minmax(120px, 240px) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+.job-status .job-error {
+  grid-column: 1 / -1;
+}

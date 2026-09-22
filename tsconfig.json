@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/db" },
+    { "path": "packages/shared" },
+    { "path": "packages/ingest" },
+    { "path": "packages/analysis" },
+    { "path": "packages/api" },
+    { "path": "packages/worker" },
+    { "path": "packages/web" }
+  ]
+}

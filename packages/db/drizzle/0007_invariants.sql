@@ -1,0 +1,12 @@
+ALTER TABLE "pairs" ADD CONSTRAINT "pairs_tokens_differ_check" CHECK ("pairs"."token_base" <> "pairs"."token_quote");--> statement-breakpoint
+ALTER TABLE "pools" ADD CONSTRAINT "pools_tokens_differ_check" CHECK ("pools"."token0" <> "pools"."token1");--> statement-breakpoint
+ALTER TABLE "windows" ADD CONSTRAINT "windows_ts_order_check" CHECK ("windows"."from_ts" < "windows"."to_ts");--> statement-breakpoint
+ALTER TABLE "windows" ADD CONSTRAINT "windows_blocks_order_check" CHECK ("windows"."from_block" IS NULL OR "windows"."to_block" IS NULL OR "windows"."from_block" <= "windows"."to_block");--> statement-breakpoint
+ALTER TABLE "ingest_ranges" ADD CONSTRAINT "ingest_ranges_from_le_to_check" CHECK ("ingest_ranges"."from_block" <= "ingest_ranges"."to_block");--> statement-breakpoint
+ALTER TABLE "block_states" ADD CONSTRAINT "block_states_feature_ranges_check" CHECK ("block_states"."s" >= 0 AND "block_states"."s" <= 3 AND "block_states"."g" >= 0 AND "block_states"."g" <= 2 AND "block_states"."l" >= 0 AND "block_states"."l" <= 100 AND "block_states"."m" >= 0 AND "block_states"."m" <= 100.000001);--> statement-breakpoint
+ALTER TABLE "block_states" ADD CONSTRAINT "block_states_nonnegative_check" CHECK ("block_states"."spread_pct" >= 0 AND "block_states"."tvl_min_usd" >= 0);--> statement-breakpoint
+ALTER TABLE "model_scores" ADD CONSTRAINT "model_scores_score_range_check" CHECK ("model_scores"."score" >= 0 AND "model_scores"."score" <= 100);--> statement-breakpoint
+ALTER TABLE "opportunities" ADD CONSTRAINT "opportunities_spread_nonnegative_check" CHECK ("opportunities"."spread_pct" >= 0);--> statement-breakpoint
+ALTER TABLE "opportunity_verifications" ADD CONSTRAINT "opportunity_verifications_consumer_iff_consumed_check" CHECK (("opportunity_verifications"."consumer_tx_hash" IS NOT NULL) = ("opportunity_verifications"."status" IN ('consumed_atomic', 'consumed_partial')));--> statement-breakpoint
+ALTER TABLE "opportunity_verifications" ADD CONSTRAINT "opportunity_verifications_k_range_check" CHECK ("opportunity_verifications"."blocks_to_consumption" IS NULL OR ("opportunity_verifications"."blocks_to_consumption" >= 0 AND "opportunity_verifications"."blocks_to_consumption" <= 3));--> statement-breakpoint
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_progress_range_check" CHECK ("jobs"."progress" >= 0 AND "jobs"."progress" <= 100);

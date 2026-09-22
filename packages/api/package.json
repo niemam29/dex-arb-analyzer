@@ -1,0 +1,28 @@
+{
+  "name": "@dex-arb/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx --env-file=../../.env src/server.ts",
+    "coverage": "tsx --env-file=../../.env scripts/coverage.ts",
+    "export-results": "tsx --env-file=../../.env scripts/export-results.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dex-arb/analysis": "^0.1.0",
+    "@dex-arb/core": "^0.1.0",
+    "@dex-arb/db": "^0.1.0",
+    "@dex-arb/ingest": "^0.1.0",
+    "@dex-arb/shared": "^0.1.0",
+    "fastify": "^5.12.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

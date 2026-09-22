@@ -1,0 +1,20 @@
+% Diagram przypadków użycia
+\begin{tikzpicture}[dg]
+\node[actor] (badacz) at (0,1.0) {Badacz};
+\node[actor] (worker) at (0,-6.3) {Proces\\\texttt{worker}};
+\node[actor] (rpc) at (13.2,-1.9) {Węzeł RPC};
+
+\foreach \i/\t in {1/{Zleć pobranie danych (pula, okno)}, 2/{Zleć analizę pary w~oknie},
+                   3/{Zleć weryfikację okazji}, 4/{Przeglądaj szeregi i~okazje},
+                   5/{Kalibruj / trenuj model}, 6/{Porównaj modele}, 7/{Obserwuj stan na żywo}}
+  \node[uc] (u\i) at (6.6, 2.9-1.15*\i) {\t};
+\node[uc] (u8) at (6.6,-6.3) {Wykonaj zadanie z~kolejki};
+
+\node[draw=dgLine, rounded corners=5pt, fit=(u1)(u8), inner sep=9pt] (box) {};
+\node[anchor=south west, font=\footnotesize\ttfamily, text=dgLine] at ([yshift=1pt]box.north west) {dex-arb-analyzer};
+
+\foreach \i in {1,...,7} \draw[dep, draw=dgLine] (badacz.east) -- (u\i.west);
+\draw[dep, draw=dgLine] (worker.east) -- (u8.west);
+\draw[ctl] (u8.north) -- node[lbl, right, xshift=2pt] {\textit{<<include>>} ingest, analiza, weryfikacja, trening} (u7.south);
+\foreach \i in {1,3,7} \draw[dep, draw=dgLine] (rpc.west) -- (u\i.east);
+\end{tikzpicture}

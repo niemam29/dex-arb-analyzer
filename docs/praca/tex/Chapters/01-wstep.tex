@@ -1,0 +1,119 @@
+\newpage
+\section{Wstęp}
+\subsection{Kontekst i~motywacja}
+
+Zdecentralizowane giełdy (ang. \emph{decentralized exchange}, DEX) umożliwiają wymianę aktywów
+cyfrowych za pomocą smart kontraktów. Znacząca część z~tych giełd korzysta z~algorytmu AMM
+(ang. \emph{automated market maker}). Ponieważ różne rynki mają niezależne pule płynności,
+istnieje możliwość występowania rozbieżności cenowych pomiędzy tymi samymi aktywami.
+
+W~takim przypadku pojawia się możliwość arbitrażu: zakupu aktywu na tańszym rynku i~sprzedaży na
+droższym. Dzięki wykorzystaniu tego zjawiska rynki stają się bardziej efektywne: znikają
+rozbieżności cenowe. Sama różnica cenowa nie oznacza jednak, że taka okazja jest wykonalna.
+Wpływają na nią takie czynniki jak koszty wykonania transakcji, płynność czy kolejność wykonania
+transakcji, która w~warunkach konkurencji może ulegać zmianie poprzez mechanizmy znane jako MEV
+(ang. \emph{miner extractable value}). W~konsekwencji samo wykrycie rozbieżności cenowej nie
+jest wystarczające do oceny możliwości jej wykorzystania w~praktyce. Konieczna jest analiza
+czynników wpływających na wykonalność takich okazji, co może stanowić podstawę opracowania
+narzędzi analitycznych zabezpieczających potencjalnych uczestników rynku (np. animatorów
+rynku), tak aby ich oferty nie były narażone na straty.
+
+\subsection{Cel i~zakres pracy}
+
+Celem projektu jest opracowanie i~implementacja systemu zbierającego i~analizującego
+historyczne dane ze zdecentralizowanych giełd w~celu wykrywania rozbieżności cenowych oraz
+oceny wykonalności takich okazji. Ma on pełnić rolę narzędzia analitycznego zabezpieczającego
+uczestników rynku przy realizacji strategii cenowych. W~ramach projektu opracowano
+heurystyczny algorytm oceny wykonalności wykrytych okazji arbitrażowych.
+
+Heurystyczna ocena wykonalności stanowi punkt wyjścia: w~pracy zestawiono prostą heurystykę
+progową z~jej wersją skalibrowaną na danych historycznych oraz z~dwoma modelami opartymi na
+logice rozmytej, systemem wnioskowania Mamdaniego, którego reguły zapisują wiedzę ekspercką
+o~czynnikach wykonalności, oraz siecią neuro-rozmytą ANFIS, w~której parametry reguł są uczone
+z~danych. Porównanie tych modeli na wspólnym protokole ewaluacji, z~etykietami uzyskanymi przez
+retrospektywną weryfikację on-chain, pozwala ocenić, w~jakim stopniu ocena wykonalności może
+być trafniejsza od samego wykrycia rozbieżności cenowej.
+
+Realizacja celu obejmuje następujące zadania:
+\begin{itemize}[nosep]
+  \item zaprojektowanie i~implementację systemu gromadzącego historyczne stany puli Uniswap~V2
+        i~Sushiswap z~węzła Ethereum oraz wykrywającego rozbieżności cenowe,
+  \item zbudowanie procedury weryfikacji retrospektywnej, ustalającej, czy rozbieżność została
+        skonsumowana on-chain,
+  \item opracowanie heurystycznego algorytmu oceny wykonalności i~porównanie go z~modelami
+        rozmytymi (system Mamdaniego, ANFIS) na wspólnym protokole ewaluacji,
+  \item udostępnienie wyników w~interaktywnym panelu, w~tym w~trybie analizy bieżących danych.
+\end{itemize}
+
+\subsection{Założenia techniczne}
+
+Przedmiotem analizy jest sieć Ethereum (mainnet) oraz dwie giełdy działające w~modelu AMM
+o~stałym iloczynie: Uniswap~V2 i~Sushiswap. Obie mają identyczne kontrakty puli, tę samą
+prowizję i~te same zdarzenia, więc rozbieżność cenową między nimi można liczyć wprost
+z~rezerw w~tym samym bloku. Badanie objęło cztery pary tokenów (WETH/USDC, WETH/USDT,
+WETH/DAI, WBTC/WETH) w~czterech dwutygodniowych oknach historycznych z~lat 2021--2022,
+dobranych tak, aby obejmowały okresy gwałtownych ruchów cen (krach z~maja 2021~r., szczyt
+z~listopada 2021~r., upadek Terra/Luna w~maju 2022~r., upadek FTX w~listopadzie 2022~r.).
+Okno majowe 2021~r. poprzedza zmianę EIP-1559, pozostałe są po niej, co pozwala sprawdzić
+modele w~dwóch reżimach opłat.
+
+Dane pochodzą wyłącznie z~archiwalnego węzła Ethereum przez interfejs JSON-RPC: logi zdarzeń
+kontraktów puli (\texttt{eth\_getLogs}), metadane bloków i~paragony transakcji. We wniosku
+o~zatwierdzenie tematu przewidziano indeksowanie danych subgraphami usługi The Graph
+i~udostępnianie ich backendowi w~postaci zapytań GraphQL. W~trakcie projektowania odstąpiono od
+tego rozwiązania z~trzech powodów. Po pierwsze, publiczne subgraphy Uniswap~V2 i~Sushiswap
+agregują stan puli w~przedziałach godzinowych i~dziennych, a~ocena wykonalności wymaga rezerw
+po każdym bloku. Po drugie, weryfikacja retrospektywna okazji potrzebuje paragonów transakcji
+konsumujących (logi \texttt{Transfer}, zużyty gaz), których subgraph nie udostępnia, więc
+dostęp do węzła RPC był niezbędny niezależnie od źródła stanów. Po trzecie, logi zdarzeń są
+źródłem pierwotnym, z~którego subgraph sam jest budowany; pobranie ich bezpośrednio usuwa
+zależność od usługi zewnętrznej i~upraszcza reprodukcję wyników. Pozostałe założenia
+z~wniosku zachowano: analizowane są zdarzenia smart kontraktów giełd AMM w~sieci zgodnej
+z~EVM, system napisano w~języku TypeScript, a~dane przechowuje relacyjna baza PostgreSQL.
+
+Przyjęto, że transakcja arbitrażowa to atomowa wymiana w~dwóch pulach tej samej pary w~jednej
+transakcji (dwa swapy i~transfer, ok. 220\,000 jednostek gazu), a~okazją jest blok, w~którym
+rozbieżność przekracza sumę prowizji obu wymian. Arbitraż trójkątny, wielohopowy i~między
+sieciami pozostaje poza zakresem. System jest aplikacją lokalną, bez uwierzytelniania
+i~bez obsługi reorganizacji łańcucha; analizowane bloki są dawno finalne.
+
+\subsection{Zakres prac własnych a~elementy wykorzystane}
+
+W~ramach projektu zaprojektowano i~zaimplementowano od podstaw: schemat bazy danych
+i~migracje; warstwę pobierania danych z~węzła RPC (porcjowanie, wznawianie, rotacja węzłów);
+odtwarzanie stanu puli po każdym bloku i~arytmetykę AMM na liczbach całkowitych, w~tym wzór
+na optymalną wielkość transakcji; obliczanie cech i~wykrywanie okazji; procedurę weryfikacji
+retrospektywnej z~klasyfikacją statusu, beneficjenta i~trasy; heurystykę progową oraz jej
+wersję kalibrowaną; implementację ANFIS z~uczeniem gradientowym; protokół ewaluacji
+z~podziałem grupowym, bootstrapem i~metrykami; kolejkę zadań, serwer API i~interfejs
+użytkownika z~trybem na żywo; zestaw 953 testów automatycznych, potok CI i~skrypty
+reprodukcji.
+
+Zdefiniowano cechy $S$, $G$, $L$, $M$
+oraz bazę 16 reguł i~parametry termów systemu Mamdaniego, który w~tej pracy zaimplementowano jako moduł oceny i~poddano ewaluacji na etykietach z~weryfikacji. Do wnioskowania
+rozmytego użyto biblioteki \texttt{@thi.ng/fuzzy}, do warstwy danych Drizzle ORM i~PostgreSQL,
+do API Fastify, do walidacji kontraktów zod, do interfejsu React, Vite, TanStack Query
+i~Recharts, a~do testów Vitest. Dekodowanie logów kontraktów oparto na bibliotece ethers.
+Wzory arytmetyki puli odtworzono z~kontraktów Uniswap~V2. Narzędzia generatywnej sztucznej inteligencji użyte przy
+realizacji projektu opisano w~rozdziale~6.
+
+\subsection{Struktura pracy i~konwencja edytorska}
+
+Rozdział~2 wprowadza pojęcia z~zakresu Ethereum, giełd AMM, arbitrażu i~MEV, logiki rozmytej
+oraz oceny klasyfikatorów, a~kończy się przeglądem istniejących rozwiązań i~uzasadnieniem
+własnego podejścia. Rozdział~3 opisuje projekt i~implementację systemu: przypadki użycia,
+architekturę, model danych, pozyskiwanie danych, wykrywanie okazji, cztery modele oceny,
+weryfikację retrospektywną, kolejkę zadań, API i~interfejs. Rozdział~4 przedstawia zbiór
+danych, protokół ewaluacji, sprawdzenie poprawności implementacji, porównanie modeli, ich
+stabilność oraz wstępną ocenę ekonomiczną, a~zamyka go dyskusja wyników i~ograniczeń.
+Rozdział~5 podsumowuje realizację celów i~wskazuje kierunki dalszych prac, rozdział~6
+dokumentuje użycie narzędzi GenAI. Załączniki zawierają instrukcję uruchomienia, słownik
+pojęć, pełną bazę reguł, opis repozytorium i~listę punktów końcowych API.
+
+W~tekście nazwy plików, tabel, kolumn, zmiennych i~poleceń zapisano czcionką o~stałej
+szerokości (np. \texttt{block\_states}, \texttt{eth\_getLogs}), terminy angielskie kursywą
+z~podaniem polskiego odpowiednika przy pierwszym wystąpieniu, a~fragmenty kodu źródłowego
+TypeScript i~polecenia powłoki jako numerowane listingi (,,Fragment kodu''). Wzory są
+numerowane w~nawiasach okrągłych, a~odwołania do literatury podano w~nawiasach kwadratowych
+w~kolejności cytowania. Liczby w~tekście zapisano z~przecinkiem dziesiętnym i~odstępem jako
+separatorem tysięcy; kwoty w~USD podano według kursu ETH/USD z~bloku, którego dotyczą.

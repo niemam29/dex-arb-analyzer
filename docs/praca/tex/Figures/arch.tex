@@ -1,0 +1,36 @@
+% Diagram komponentów i przepływu danych
+\begin{tikzpicture}[dg, x=1cm, y=1cm,
+  pkg/.append style={minimum width=28mm, minimum height=12mm},
+  lib/.append style={minimum width=28mm, minimum height=12mm},
+  ext/.append style={minimum width=28mm, minimum height=12mm}]
+% rząd A: przepływ danych
+\node[ext] (rpc)    at (0,0)  {Węzeł RPC\\(archiwalny)};
+\node[pkg] (ingest) at (4,0)  {\texttt{ingest}};
+\node[ext] (db)     at (8,0)  {PostgreSQL\\(dane, kolejka \texttt{jobs})};
+\node[pkg] (api)    at (12,0) {\texttt{api}\\(Fastify)};
+\node[pkg] (web)    at (16,0) {\texttt{web}\\(React)};
+% rząd B
+\node[pkg] (analysis) at (8,-3)  {\texttt{analysis}};
+\node[lib] (core)     at (12,-3) {\texttt{core}\\(AMM, cechy, modele)};
+\node[lib] (shared)   at (16,-3) {\texttt{shared}\\(DTO zod)};
+% rząd C
+\node[pkg] (worker) at (8,-6) {\texttt{worker}\\(wykonuje zadania)};
+
+\draw[flow] (rpc) -- node[lbl,above] {logi, bloki} (ingest);
+\draw[flow] (ingest) -- node[lbl,above] {zdarzenia} (db);
+\draw[flow] (db) -- node[lbl,above] {SQL} (api);
+\draw[flow] (api) -- node[lbl,above] {JSON} (web);
+\draw[flow,<->] (db) -- node[lbl,right] {stany, okazje, oceny} (analysis);
+\draw[flow] (rpc.south) |- node[lbl,pos=.75,above] {paragony transakcji} (analysis.west);
+\draw[ctl] (worker) -- node[lbl,right] {uruchamia} (analysis);
+\draw[ctl] (worker.west) -- ++(-4.6,0) |- node[lbl,pos=.22,right] {uruchamia} (ingest.west);
+\draw[dep] (core) -- (analysis);
+\draw[dep] (core) -- (api);
+\draw[dep] (shared) -- (web);
+\draw[dep] (shared) -- (core);
+
+\node[font=\scriptsize, text=dgLine, anchor=west] at (-1.6,-7.4) {
+  \tikz\draw[flow] (0,0)--(.5,0); przepływ danych\qquad
+  \tikz\draw[ctl] (0,0)--(.5,0); sterowanie\qquad
+  \tikz\draw[dep] (0,0)--(.5,0); zależność kodu};
+\end{tikzpicture}

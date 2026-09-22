@@ -1,0 +1,23 @@
+{
+  "name": "@dex-arb/analysis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "analyze": "tsx --env-file=../../.env src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dex-arb/core": "^0.1.0",
+    "@dex-arb/db": "^0.1.0",
+    "@dex-arb/shared": "^0.1.0"
+  },
+  "devDependencies": {
+    "@dex-arb/ingest": "^0.1.0",
+    "vitest": "^2.1.9"
+  }
+}

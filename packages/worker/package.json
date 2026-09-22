@@ -1,0 +1,30 @@
+{
+  "name": "@dex-arb/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "start": "tsx --env-file=../../.env src/index.ts",
+    "jobs:enqueue": "tsx --env-file=../../.env scripts/enqueue.ts",
+    "jobs:retry": "tsx --env-file=../../.env scripts/retry.ts",
+    "jobs:wait-idle": "tsx --env-file=../../.env scripts/wait-idle.ts",
+    "window-id": "tsx --env-file=../../.env scripts/window-id.ts",
+    "matrix": "tsx --env-file=../../.env scripts/matrix.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dex-arb/analysis": "^0.1.0",
+    "@dex-arb/db": "^0.1.0",
+    "@dex-arb/ingest": "^0.1.0",
+    "@dex-arb/shared": "^0.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

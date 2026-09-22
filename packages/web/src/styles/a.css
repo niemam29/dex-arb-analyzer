@@ -1,0 +1,223 @@
+/* Tor A (Layout, Dane: CoverageTable, JobsList) — style specyficzne dla toru; tokeny i prymitywy w ../styles.css i ./ui.css. */
+
+/* Szkielet: sidebar 190 px + main; poniżej 1200 px sidebar 56 px (same ikony). */
+.layout {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--nav-bg);
+  color: var(--nav-fg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-2);
+  overflow: hidden;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  font-weight: 650;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+}
+.nav-section {
+  display: grid;
+  gap: 2px;
+}
+.nav-section-title {
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-1);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--nav-fg);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.nav-link:hover {
+  background: var(--nav-hover);
+  text-decoration: none;
+}
+.nav-link.active {
+  background: var(--nav-active);
+  color: var(--on-accent);
+}
+.nav-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav-count {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+main {
+  padding: 18px 22px;
+  min-width: 0;
+}
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: 56px 1fr;
+  }
+  .sidebar {
+    padding: var(--space-4) var(--space-2);
+    align-items: center;
+  }
+  .brand-text,
+  .nav-label,
+  .nav-section-title {
+    display: none;
+  }
+  .nav-section {
+    width: 100%;
+    justify-items: center;
+  }
+  .nav-link {
+    position: relative;
+    justify-content: center;
+    width: 40px;
+    padding: 9px 0;
+  }
+  .nav-count {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    margin: 0;
+    min-width: 16px;
+    line-height: 16px;
+    font-size: 10px;
+  }
+}
+
+/* Dane: siatka pokrycia par×okien */
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+.coverage-cell .card-body {
+  display: grid;
+  gap: var(--space-3);
+}
+.pool-rows {
+  display: grid;
+  gap: var(--space-2);
+}
+.pool-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px var(--space-2);
+  align-items: center;
+  font-size: 12.5px;
+}
+.pool-row .bar {
+  grid-column: 1 / -1;
+}
+.pool-name {
+  font-weight: 500;
+}
+.pool-failed {
+  grid-column: 1 / -1;
+  color: var(--danger-fg);
+  font-size: 11.5px;
+}
+.cell-counts {
+  display: flex;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: 12px;
+}
+.cell-counts dt {
+  color: var(--fg-muted);
+}
+.cell-counts dd {
+  margin: 0 0 0 var(--space-1);
+  font-weight: 500;
+}
+.cell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.cell-links {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+/* Dane: lista zadań */
+.jobs .job-progress {
+  min-width: 140px;
+}
+.jobs .job-progress .bar {
+  width: 80px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: var(--space-2);
+}
+.jobs .job-log-cell {
+  min-width: 360px;
+  max-width: 520px;
+}
+.job-log {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--fg-muted);
+  font-size: 11.5px;
+}
+.job-log-details summary {
+  cursor: pointer;
+  color: var(--accent-fg);
+  font-size: 11.5px;
+  margin-top: var(--space-1);
+}

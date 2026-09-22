@@ -1,0 +1,23 @@
+% Wspólny styl diagramów TikZ (wczytywany raz w main.tex)
+\definecolor{dgBox}{HTML}{F3F4F6}
+\definecolor{dgLine}{HTML}{4B5563}
+\definecolor{dgPkg}{HTML}{EEF2FF}
+\definecolor{dgPkgLine}{HTML}{4F46E5}
+\definecolor{dgLib}{HTML}{ECFDF5}
+\definecolor{dgLibLine}{HTML}{0D9488}
+\definecolor{dgExt}{HTML}{FFF7ED}
+\definecolor{dgExtLine}{HTML}{D97706}
+\definecolor{dgHead}{HTML}{E0E7FF}
+\tikzset{
+  dg/.style={font=\footnotesize, line width=.5pt, >={Stealth[length=2mm, width=1.6mm]}},
+  box/.style={draw=dgLine, fill=dgBox, rounded corners=3pt, align=center, inner sep=5pt, minimum height=8mm},
+  pkg/.style={box, draw=dgPkgLine, fill=dgPkg, minimum width=26mm, minimum height=11mm},
+  lib/.style={box, draw=dgLibLine, fill=dgLib, minimum width=26mm, minimum height=11mm},
+  ext/.style={box, draw=dgExtLine, fill=dgExt, minimum width=26mm, minimum height=11mm},
+  actor/.style={box, minimum width=22mm},
+  uc/.style={draw=dgLine, fill=white, ellipse, align=center, inner sep=2pt, minimum width=44mm, minimum height=9mm},
+  flow/.style={->, draw=dgLine, line width=.7pt},
+  ctl/.style={->, draw=dgPkgLine, line width=.7pt, dashed},
+  dep/.style={-, draw=dgLine!50, line width=.5pt},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt, text=dgLine},
+}

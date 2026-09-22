@@ -1,0 +1,74 @@
+[
+  {
+    "name": "S1: okazja wzorcowa",
+    "desc": "największe W w oknie",
+    "hypothetical": false,
+    "block": 12474793,
+    "S": 1.3576,
+    "G": 0.06795962155390277,
+    "L": 100,
+    "M": 22.262495477334987,
+    "W": 83.59777193253902,
+    "label": "atrakcyjna"
+  },
+  {
+    "name": "S2: typowy blok",
+    "desc": "spread w pobliżu mediany — brak okazji",
+    "hypothetical": false,
+    "block": 12430614,
+    "S": 0.076,
+    "G": 0.16472894971412388,
+    "L": 100,
+    "M": 57.53023724608466,
+    "W": 11.61474926253688,
+    "label": "niewykonalna"
+  },
+  {
+    "name": "S3: spread zniweczony przez gaz",
+    "desc": "S>0.6% przy wysokim G",
+    "hypothetical": false,
+    "block": 12464884,
+    "S": 3,
+    "G": 0.534303145179535,
+    "L": 100,
+    "M": 96.95560035147568,
+    "W": 40,
+    "label": "ryzykowna"
+  },
+  {
+    "name": "S4: okazja przy wysokiej konkurencji",
+    "desc": "S>0.8% przy M>70",
+    "hypothetical": false,
+    "block": 12429895,
+    "S": 3,
+    "G": 0.19213848233106384,
+    "L": 100,
+    "M": 72.30384555745076,
+    "W": 39.99999999999995,
+    "label": "ryzykowna"
+  },
+  {
+    "name": "S5: płytka pula (hipotetyczny)",
+    "desc": "duży spread, ale TVL=1,5 mln",
+    "hypothetical": true,
+    "block": 0,
+    "S": 2,
+    "G": 0.1,
+    "L": 1.5,
+    "M": 20,
+    "W": 40,
+    "label": "ryzykowna"
+  },
+  {
+    "name": "S6: graniczny spread (hipotetyczny)",
+    "desc": "spread tuż powyżej progu prowizji",
+    "hypothetical": true,
+    "block": 0,
+    "S": 0.7,
+    "G": 0.15,
+    "L": 80,
+    "M": 30,
+    "W": 65,
+    "label": "wykonalna"
+  }
+]

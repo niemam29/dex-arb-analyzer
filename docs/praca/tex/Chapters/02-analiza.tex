@@ -1,0 +1,203 @@
+\newpage
+\section{Giełdy zdecentralizowane i~arbitraż --- przegląd zagadnień}
+
+\subsection{Ethereum: bloki, transakcje, zdarzenia i~opłaty za gaz}
+
+Ethereum jest zdecentralizowaną maszyną stanów. Stan globalny zmieniają wyłącznie transakcje
+zgrupowane w~bloki, a~semantykę ich wykonania definiuje maszyna wirtualna EVM
+(ang. \emph{Ethereum Virtual Machine})~\cite{ethereum_yellowpaper}. Kontrakt może podczas wykonania
+wyemitować \emph{zdarzenie} (ang. \emph{event}), które trafia do paragonu transakcji jako
+\emph{log}: adres kontraktu, do czterech indeksowanych tematów (ang. \emph{topics}) i~dane.
+Węzły udostępniają metodę JSON-RPC \texttt{eth\_getLogs}, pobierającą logi z~zakresu bloków według
+adresu i~tematu. Kontrakty giełd emitują zdarzenie po każdej zmianie rezerw, więc logi są
+kompletnym i~weryfikowalnym zapisem historii puli. Na tej własności opiera się warstwa
+pozyskiwania danych z~rozdziału~3.4.
+
+Każda operacja EVM ma koszt wyrażony w~jednostkach \emph{gazu}. Nadawca deklaruje limit gazu
+i~cenę za jednostkę. W~pierwotnym modelu opłat cena gazu była pojedynczą wartością
+\texttt{gasPrice} ustalaną przez nadawcę; górnicy porządkowali transakcje malejąco według tej
+ceny, co sprowadzało dostęp do bloku do jawnej licytacji. Zmiana EIP-1559~\cite{eip1559},
+aktywowana w~bloku 12\,965\,000 (5~sierpnia 2021~r.), wprowadziła opłatę bazową
+\texttt{baseFeePerGas}, ustalaną przez protokół i~spalaną, oraz napiwek
+\texttt{maxPriorityFeePerGas} dla producenta bloku. Z~analizy Liu i~in.~\cite{liu_eip1559} wynika,
+że EIP-1559 zmniejszyło rozrzut cen gazu wewnątrz bloku i~ułatwiło ich szacowanie, ale samego
+poziomu opłat istotnie nie obniżyło. Dla tej pracy oznacza to dwie rzeczy: koszt transakcji
+arbitrażowej trzeba szacować inaczej w~oknach sprzed i~po EIP-1559 (rozdział~3.4), a~cena gazu
+pozostaje wielkością zmienną w~czasie i~jednym z~głównych składników kosztu arbitrażu.
+
+\subsection{Automatyczni animatorzy rynku o~stałym iloczynie}
+
+Giełda typu AMM zastępuje księgę zleceń pulą płynności. Kontrakt przechowuje rezerwy dwóch
+tokenów i~wycenia wymianę deterministyczną funkcją tych rezerw; kontrahentem każdej transakcji
+jest sama pula~\cite{xu_sok_amm}. W~protokole Uniswap~V2~\cite{uniswap_v2} funkcją tą jest stały
+iloczyn. Dla rezerw $x$ i~$y$ tokenów $X$ i~$Y$ niezmiennik ma postać
+\begin{equation}
+  x \cdot y = k .
+  \label{eq:cpmm}
+\end{equation}
+Cena chwilowa tokena $X$ wyrażona w~tokenie $Y$ wynika ze stosunku rezerw:
+\begin{equation}
+  p = \frac{y}{x}.
+  \label{eq:spot}
+\end{equation}
+Wymiana $\Delta x$ jednostek $X$ przy prowizji $\varphi = 0{,}3\,\%$ zwraca
+\begin{equation}
+  \Delta y = \frac{(1-\varphi)\,\Delta x \cdot y}{x + (1-\varphi)\,\Delta x}
+           = \frac{997\,\Delta x\, y}{1000\,x + 997\,\Delta x},
+  \label{eq:amountout}
+\end{equation}
+zgodnie z~funkcją \texttt{getAmountOut} w~kontraktach Uniswap~V2. Z~równań \eqref{eq:cpmm} i~\eqref{eq:amountout} widać, że cena efektywna rośnie z~wielkością transakcji (poślizg cenowy),
+a~prowizja zostaje w~puli i~powiększa $k$. Po każdej zmianie stanu kontrakt pary emituje
+zdarzenie \texttt{Sync} z~nowymi rezerwami, a~przy wymianie dodatkowo \texttt{Swap} z~kwotami.
+Cenę~\eqref{eq:spot} w~dowolnym bloku można więc odtworzyć z~samych logów.
+
+Sushiswap powstał w~2020~r. jako kopia (ang. \emph{fork}) kontraktów Uniswap~V2 z~własnymi pulami
+płynności. Oba protokoły mają identyczną formułę~\eqref{eq:amountout}, te same sygnatury zdarzeń
+i~tę samą prowizję, więc porównanie ich cen sprowadza się do porównania rezerw w~tym samym
+bloku. Systematyczny przegląd protokołów AMM, także tych o~stałej średniej i~o~skoncentrowanej
+płynności, zawiera praca Xu i~in.~\cite{xu_sok_amm}.
+
+Angeris i~in.~\cite{angeris_uniswap} pokazali, że w~rynku o~stałym iloczynie każde odchylenie
+ceny~\eqref{eq:spot} od ceny referencyjnej tworzy zyskowną okazję dla arbitrażysty, a~zysk ten
+maksymalizuje transakcja zamykająca odchylenie do poziomu prowizji. Przy dostatecznej
+aktywności arbitrażystów cena puli musi zatem śledzić rynek referencyjny. Obserwowana
+rozbieżność między dwiema pulami świadczy o~czymś przeciwnym: w~danym bloku arbitraż nie został
+jeszcze wykonany.
+
+\subsection{Arbitraż między pulami i~czynniki jego wykonalności}
+
+Niech dwie pule tej samej pary tokenów, $A$ i~$B$, mają ceny chwilowe $p_A$ i~$p_B$. Względną
+rozbieżność cenową definiuje się jako
+\begin{equation}
+  S = \frac{|p_A - p_B|}{\min(p_A, p_B)} \cdot 100\,\%.
+  \label{eq:spread}
+\end{equation}
+Arbitraż dwupulowy to zakup tokena w~puli tańszej i~sprzedaż w~droższej w~jednej, atomowej
+transakcji. Każda z~dwóch wymian jest obciążona prowizją $\varphi$, więc zysk brutto pojawia się
+dopiero, gdy rozbieżność przekracza koszt prowizji obu nóg, $(1-\varphi)^{-2} - 1 \approx
+0{,}60\,\%$. W~pracy przyjęto próg $0{,}65\,\%$ (rozdział~3.5). Dla ustalonego stanu obu puli
+istnieje wielkość transakcji maksymalizująca zysk brutto; wynika ona z~równania
+\eqref{eq:amountout} i~jest wyprowadzona w~rozdziale~3.5.
+
+Rozbieżność powyżej progu nie przesądza jednak o~wykonalności. Literatura wskazuje trzy grupy
+czynników. Pierwszą jest koszt wykonania: transakcja arbitrażowa zużywa gaz na dwie wymiany
+i~transfery, a~przy wysokiej cenie gazu ten koszt stały może przewyższyć zysk brutto. Drugą jest
+płynność. Zysk z~rozbieżności ogranicza poślizg, więc w~płytkich pulach optymalna transakcja
+jest mała, a~zysk absolutny niewielki~\cite{angeris_uniswap}. Trzecią grupą jest konkurencja
+i~kolejność transakcji: okazję widzą wszyscy obserwatorzy sieci, a~o~tym, kto ją zrealizuje,
+decyduje kolejność w~bloku.
+
+Ostatni czynnik jest przedmiotem badań nad wartością możliwą do wydobycia przez producenta
+bloku (ang. \emph{miner/maximal extractable value}, MEV). Daian i~in.~\cite{daian_flashboys}
+udokumentowali boty arbitrażowe konkurujące o~pierwszeństwo w~bloku przez licytację ceny gazu
+(ang. \emph{priority gas auctions}); znaczna część zysku z~arbitrażu trafia wtedy do górników,
+a~sama konkurencja destabilizuje konsensus. Zhou i~in.~\cite{zhou_hft_dex} sformalizowali ataki na
+kolejność transakcji na giełdach AMM (\emph{front-running}, \emph{sandwich}), a~Qin
+i~in.~\cite{qin_bev} oszacowali łączną skalę wartości wydobywanej z~DeFi, w~tym z~arbitrażu.
+Wniosek istotny dla tej pracy: aktywność botów i~podwyższona cena gazu w~danym momencie
+zmniejszają szansę, że obserwator rozbieżności skonsumuje ją jako pierwszy. Te dwie wielkości
+tworzą cechę ryzyka~$M$ w~rozdziale~3.5. Odkąd Flashbots udostępnili prywatny kanał przekazywania
+transakcji do górników~\cite{flashbots}, część konkurencji przeniosła się poza publiczną pulę
+transakcji, co dodatkowo utrudnia ocenę wykonalności na podstawie samych danych on-chain.
+Propozycje ograniczania takich manipulacji na poziomie protokołu omawiają m.in. Heimbach
+i~Wattenhofer~\cite{heimbach_sandwich}.
+
+Badania empiryczne potwierdzają, że rozbieżności między pulami występują i~są konsumowane na dużą
+skalę. McLaughlin i~in.~\cite{mclaughlin_arbitrage} w~pomiarze obejmującym 28~miesięcy
+zidentyfikowali 3{,}8~mln wykonanych arbitraży o~łącznym zysku ok.~321~mln USD. Zaobserwowali też,
+że część okazji utrzymuje się przez kilka kolejnych bloków. Berg i~in.~\cite{berg_inefficiencies}
+analizowali pary Uniswap i~Sushiswap i~wykazali, że efektywność cenowa obu giełd spada w~okresach
+wysokiej zmienności kursów, a~liczba okazji arbitrażu cyklicznego wówczas rośnie. Metodę
+identyfikacji arbitraży cyklicznych w~Uniswap~V2 z~danych on-chain opisali Wang
+i~in.~\cite{wang_cyclic_arbitrage}. Z~tych obserwacji wynikają dwie decyzje projektowe: dobór okien
+historycznych obejmujących gwałtowne ruchy cen oraz śledzenie konsumpcji okazji przez kilka
+bloków po jej wykryciu (rozdział~3.7).
+
+\subsection{Logika rozmyta i~systemy wnioskowania rozmytego}
+
+Zbiór rozmyty $\tilde{A}$ w~przestrzeni $U$ jest określony funkcją przynależności
+$\mu_{\tilde A}\colon U \to [0,1]$~\cite{zadeh1965}. W~odróżnieniu od zbioru klasycznego element
+może należeć do niego częściowo. Pojęcia nieostre, takie jak ,,duża rozbieżność'' czy ,,zaporowy
+koszt gazu'', da się wtedy opisać funkcjami ciągłymi zamiast sztywnych progów. Dla oceny
+wykonalności jest to naturalne: poszczególne czynniki nie mają ostrych granic i~wzajemnie się
+kompensują.
+
+System wnioskowania rozmytego typu Mamdaniego~\cite{mamdani1975} składa się z~bazy reguł postaci
+,,\textsc{jeżeli} $x_1$ jest $\tilde A_1$ \textsc{i} $x_2$ jest $\tilde A_2$ \textsc{to} $y$ jest
+$\tilde B$'', bloku rozmywania wejść, mechanizmu wnioskowania i~bloku wyostrzania. Stopień
+aktywacji reguły oblicza t-norma (w~pracy minimum) stopni przynależności przesłanek. Konkluzja
+reguły jest obcinana na tym poziomie (implikacja minimum), konkluzje wszystkich reguł agreguje
+s-norma (maksimum), a~wynik liczbowy wyznacza środek ciężkości zagregowanego zbioru:
+\begin{equation}
+  y^{*} = \frac{\int y\, \mu_{\mathrm{agg}}(y)\, \mathrm{d}y}{\int \mu_{\mathrm{agg}}(y)\, \mathrm{d}y}.
+  \label{eq:centroid}
+\end{equation}
+Zaletą modelu Mamdaniego jest interpretowalność. Reguły zapisują wiedzę ekspercką wprost, można
+je czytać i~poprawiać bez danych uczących. Wadą jest brak mechanizmu strojenia: parametry funkcji
+przynależności i~zestaw reguł dobiera się ręcznie. System Mamdaniego jako doradcę transakcyjnego
+na rynku kryptowalut, z~regułami strojonymi algorytmem genetycznym, przedstawili Tupinambás
+i~in.~\cite{tupinambas_fuzzy_crypto}.
+
+Model Takagiego--Sugeno~\cite{takagi_sugeno1985} zachowuje rozmyte przesłanki, ale konkluzją reguły
+$i$ jest funkcja wejść, w~wariancie pierwszego rzędu liniowa:
+\begin{equation}
+  y_i = c_{i0} + \sum_{j} c_{ij}\, x_j ,
+  \qquad
+  y = \frac{\sum_i w_i\, y_i}{\sum_i w_i},
+  \label{eq:ts}
+\end{equation}
+gdzie $w_i$ jest stopniem aktywacji reguły. Wyjście~\eqref{eq:ts} jest ważoną średnią konkluzji,
+przez co model jest różniczkowalny względem parametrów. Jang~\cite{jang1993} zaproponował ANFIS
+(ang. \emph{adaptive-network-based fuzzy inference system}): model Takagiego--Sugeno zapisany jako
+pięciowarstwowa sieć adaptacyjna (rozmywanie, iloczyn przesłanek, normalizacja aktywacji,
+konkluzje liniowe, sumowanie) i~uczony algorytmem hybrydowym. Parametry konkluzji $c_{ij}$
+wyznacza metoda najmniejszych kwadratów przy ustalonych przesłankach, a~parametry funkcji
+przynależności koryguje krok gradientowy. ANFIS łączy czytelną strukturę regułową ze zdolnością
+dopasowania do danych, kosztem częściowej utraty interpretowalności konkluzji. W~pracy oba
+podejścia porównano na tym samym zestawie cech: system Mamdaniego z~regułami zapisanymi na
+podstawie wiedzy dziedzinowej oraz ANFIS uczony na etykietach z~weryfikacji retrospektywnej
+(rozdział~3.6).
+
+\subsection{Ocena klasyfikatorów przy silnej nierównowadze klas}
+
+Modele oceny wykonalności zwracają wynik liczbowy, który po przyłożeniu progu staje się decyzją
+binarną. Ocena takich modeli wymaga miar niezależnych od progu i~odpornych na nierównowagę klas.
+W~analizowanych danych okazje faktycznie skonsumowane stanowią około jednej dziesiątej
+wykrytych rozbieżności.
+
+Krzywa ROC (ang. \emph{receiver operating characteristic}) przedstawia zależność czułości od odsetka
+fałszywych alarmów dla wszystkich progów. Pole pod nią (AUC) ma interpretację prawdopodobieństwa,
+że losowo wybrany przykład pozytywny otrzyma wyższy wynik niż losowo wybrany
+negatywny~\cite{fawcett2006}. Przy skośnym rozkładzie klas ROC bywa zbyt optymistyczna, bo duża
+liczba negatywów maskuje fałszywe alarmy. Davis i~Goadrich~\cite{davis_goadrich2006} oraz Saito
+i~Rehmsmeier~\cite{saito_pr_auc} pokazują, że krzywa precyzja--czułość i~pole pod nią (PR-AUC,
+równoważne średniej precyzji) lepiej oddają użyteczność modelu, gdy liczy się jakość wskazań
+pozytywnych. W~rozdziale~4 raportowane są obie miary, uzupełnione o~precyzję, czułość i~miarę
+$F_1$ przy stałym progu. Niepewność AUC wyznaczono metodą bootstrap~\cite{efron1979}:
+wielokrotne losowanie ze zwracaniem zbioru testowego daje rozkład statystyki, z~którego
+odczytuje się przedział ufności. Sąsiednie bloki tej samej okazji są silnie skorelowane, a~jedna
+transakcja może konsumować kilka rozbieżności, dlatego podział na zbiory uczący i~testowy musi
+przebiegać na poziomie grup, nie pojedynczych obserwacji. Protokół opisano w~rozdziale~4.2.
+
+\subsection{Istniejące rozwiązania i~uzasadnienie własnego podejścia}
+
+Prace najbliższe tematycznie dzielą się na trzy grupy. Pierwszą stanowią pomiary ex post
+wykonanych arbitraży i~MEV na podstawie historii łańcucha. McLaughlin
+i~in.~\cite{mclaughlin_arbitrage} zbudowali system identyfikujący zrealizowane arbitraże oraz
+detektor okazji obsługujący złożone modele cen; Qin i~in.~\cite{qin_bev} skwantyfikowali wartość
+wydobytą z~różnych klas transakcji; narzędzie \emph{mev-inspect} Flashbots~\cite{mev_inspect}
+klasyfikuje transakcje MEV w~zadanym zakresie bloków. Drugą grupę tworzą badania efektywności
+rynku: Berg i~in.~\cite{berg_inefficiencies} mierzą, jak dokładnie Uniswap i~Sushiswap śledzą cenę
+referencyjną, a~Wang i~in.~\cite{wang_cyclic_arbitrage} badają arbitraż cykliczny. Trzecią są
+prace teoretyczne o~optymalnym arbitrażu w~rynkach o~stałej funkcji~\cite{angeris_uniswap}.
+
+Wszystkie te prace odpowiadają na pytanie, co się wydarzyło albo jaki zysk był teoretycznie
+możliwy. Żadna nie formułuje oceny wykonalności okazji \emph{ex ante}, w~chwili jej wykrycia, na
+podstawie cech obserwowalnych w~danym bloku, ani nie weryfikuje takiej oceny względem
+faktycznej konsumpcji. Tę lukę wypełnia system z~rozdziału~3. Łączy on wykrywanie rozbieżności
+z~retrospektywną weryfikacją, czy zostały skonsumowane, a~uzyskane etykiety wykorzystuje do
+porównania czterech modeli oceny (prostej heurystyki, jej wersji skalibrowanej, systemu Mamdaniego
+i~ANFIS) na wspólnym protokole ewaluacji. Wnioskowanie rozmyte wybrano na rdzeń oceny z~powodu
+charakteru problemu: czynniki wykonalności (rozbieżność, koszt gazu, płynność, ryzyko
+konkurencji) są nieostre i~wzajemnie się kompensują, a~interpretowalność reguł pozwala wyjaśnić
+każdą ocenę użytkownikowi narzędzia.

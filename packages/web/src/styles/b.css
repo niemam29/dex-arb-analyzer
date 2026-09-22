@@ -1,0 +1,80 @@
+/* Tor B (Okazje: OpportunityTable, OpportunityDetailPanel, RuleActivationBars) — style specyficzne dla toru. */
+
+/* Okazje: tabela — nagłówki mogą zawijać się do 2 linii (spec: zmieścić się przy 1440 px bez
+   poziomego scrolla, patrz też directionShort/merge kolumny Opłacalna w OpportunityTable.tsx),
+   komórki zostają w jednej linii. */
+.opps td {
+  white-space: nowrap;
+}
+.opps th {
+  white-space: normal;
+  line-height: 1.2;
+}
+/* Status: badge statusu weryfikacji (krótka forma statusShortLabel, pełny opis w title=) +
+   ewentualnie 'multi' + glif opłacalności (merge kolumny Opłacalna) — po skróceniu etykiet
+   mieszczą się na jednej linii przy 1440 px, więc komórka wraca do wspólnego
+   .opps td { white-space: nowrap }. */
+.opps td.opps-status {
+  white-space: nowrap;
+}
+.opps td.key {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.pager .pager-info {
+  margin: 0 var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Okazje: panel szczegółów */
+.detail .card-body {
+  display: grid;
+  gap: var(--space-4);
+}
+.detail-summary {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.detail-section {
+  display: grid;
+  gap: var(--space-2);
+}
+.profit {
+  color: var(--ok-fg);
+  font-weight: 500;
+}
+.loss {
+  color: var(--danger);
+  font-weight: 500;
+}
+.reserves td.mono {
+  font-size: 11px;
+}
+
+/* Okazje: aktywacje reguł Mamdaniego */
+.rule-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.rule-bars li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+}
+.rule-id {
+  width: 2.4rem;
+  color: var(--fg-muted);
+}
+.rule-val {
+  width: 2.6rem;
+}
