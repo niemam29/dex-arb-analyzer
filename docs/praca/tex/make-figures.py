@@ -10,7 +10,7 @@ RES = ROOT / "results"
 OUT = pathlib.Path(__file__).resolve().parent / "Images"
 OUT.mkdir(exist_ok=True)
 
-plt.rcParams.update({"font.family": "serif", "font.size": 9, "axes.grid": True,
+plt.rcParams.update({"pdf.fonttype": 42, "font.family": "serif", "font.size": 9, "axes.grid": True,
                      "grid.alpha": 0.3, "figure.dpi": 150})
 
 MODELS = [  # (id, etykieta, styl)

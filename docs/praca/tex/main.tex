@@ -1,6 +1,7 @@
 % Projekt dyplomowy — szablon WIMiIP/AGH (klasa aghthesis). Kompilacja: `make` (pdflatex → bibtex → pdflatex ×2).
 \documentclass[polish,12pt]{aghthesis}
 \usepackage[utf8]{inputenc}
+\input{glyphtounicode}\pdfgentounicode=1
 \usepackage{url}
 \usepackage{array}
 \usepackage{subcaption}
@@ -67,8 +68,8 @@
 \captionsetup[lstlisting]{justification=raggedright, singlelinecheck=false}
 
 % ---------- metadane ----------
-\author{Kacper Kończyk}
-\department{KATEDRA INFORMATYKI STOSOWANEJ I MODELOWANIA}
+\author{Kacper Kończyk}                         % TODO: zweryfikować pisownię jak w USOS
+\department{KATEDRA INFORMATYKI STOSOWANEJ I MODELOWANIA} % TODO: potwierdzić katedrę opiekuna
 \titlePL{Projekt systemu komputerowego do analizy danych transakcyjnych w~celu wykrywania
   rozbieżności cenowych oraz heurystycznej oceny wykonalności arbitrażu w~zdecentralizowanych
   giełdach}

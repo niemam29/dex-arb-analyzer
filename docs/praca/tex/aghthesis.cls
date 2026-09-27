@@ -38,8 +38,11 @@
 
 
 \RequirePackage{setspace}
-\RequirePackage{times}
+\RequirePackage{cmap}
 \RequirePackage[T1]{fontenc}
+\RequirePackage{tgtermes}
+\RequirePackage{tgheros}
+\RequirePackage{tgcursor}
 \RequirePackage{graphicx}
 \RequirePackage{geometry}
 \RequirePackage{xcolor}
