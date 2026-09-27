@@ -1,7 +1,7 @@
 .PHONY: all clean check
 all: main.pdf
 
-main.pdf: main.tex aghthesis.cls references.bib Chapters/*.tex Figures/*.tex Images/*.png ../../../results/evaluation.tex ../../../results/evaluation-sensitivity.tex extract-listings.py make-figures.py
+main.pdf: main.tex aghthesis.cls references.bib Chapters/*.tex Figures/*.tex Images/*.png Images/*.pdf ../../../results/evaluation.tex ../../../results/evaluation-sensitivity.tex extract-listings.py make-figures.py
 	python3 extract-listings.py
 	pdflatex -interaction=nonstopmode main.tex
 	bibtex main
